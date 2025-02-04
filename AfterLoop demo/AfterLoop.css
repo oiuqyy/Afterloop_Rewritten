@@ -1,0 +1,30 @@
+.ablock,
+.awall {
+    height: 100px;
+    width: 100px;
+    float: left;
+}
+
+.ablock {
+    border-radius: 10px;
+}
+
+.sign- {
+    background-color: white;
+    margin-top: 42px;
+    height: 16px;
+    margin-left: 14px;
+    width: 72px;
+    position: absolute;
+    border-radius: 3px;
+}
+
+.sign1 {
+    background-color: white;
+    margin-top: 14px;
+    height: 72px;
+    margin-left: 42px;
+    width: 16px;
+    position: absolute;
+    border-radius: 3px;
+}

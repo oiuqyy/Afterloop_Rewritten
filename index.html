@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Afterloop Rewritten alpha1.0</title>
+  <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous"> -->
+  <link href="bootstrap/bootstrap.min.css" rel="stylesheet">
+  <script src="jquery-3.7.1.min.js"></script>
+  <style>
+    body {
+      background-color: #ffd;
+    }
+
+    #Game_space {
+      background: repeating-linear-gradient(45deg, #ee0, #cc0 40px);
+    }
+
+    #big_container {
+      border: 2px solid #a1a1a1;
+      border-radius: 26px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1 style="text-align: center;"><i>Afterloop Rewritten by oiuqyy & ayazumi</i></h1>
+
+  <div class="container" id="big_container">
+    <div class="row">
+      <div class="col-10 p-2" id="Game_space" style="border-radius: 26px 0px 0px 26px;">
+        <h3>Game space (canvas 1000px*500px)</h3>
+        <canvas id="Canvas" width="1000" height="500"
+          style="border:3px solid #252831; margin-left: 40px;"></canvas><!--游戏主体部分-->
+      </div>
+
+      <div class="col-2 bg-light p-2" id="info" style="border-radius: 0px 26px 26px 0px">
+        <div style="border-bottom-width: 4px; border-color: #d6d7d9; border-bottom-style: solid;">
+          <h3>Infomation space</h3>
+        </div>
+        <div class="information_column" , style="overflow: auto;height: 460px;">
+          <div id="information_adding_place" style="margin-top: 5px;">
+            <!--此处通过js添加bootstrap信息提示框-->
+          </div>
+          <textarea rows='1' id="command" name="input_area"
+            style="position: absolute; bottom: 114px;width: 204px;"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container" id="small_container" style="margin-top: 8px;"><!--按钮组-->
+    <span style="font-size:30px;margin-right: 20px;"><b><i id="level_name">/</i></b></span>
+    <div class="btn-group btn-group-lg">
+      <button type="button" class="btn btn-secondary" onclick="undo()">Undo</button>
+      <button type="button" class="btn btn-secondary" onclick="redo()">Redo</button>
+    </div>
+    <div class="btn-group btn-group-lg" style="margin-left: 30px;">
+      <button type="button" class="btn btn-secondary" onclick="exportLevel()">Save</button>
+      <button type="button" class="btn btn-secondary" onclick="importLevel()">Load</button>
+    </div>
+    <div class="btn-group btn-group-lg" style="margin-left: 30px;">
+      <button type="button" class="btn btn-primary">Level Select</button>
+    </div>
+    <div class="btn-group btn-group-lg" style="margin-left: 30px;">
+      <button type="button" class="btn btn-danger">Retry</button>
+    </div>
+    <div class="input-group input-group-sm mb-3" style="margin-top: 10px;">
+      <span class="input-group-text">Save or load here: </span>
+      <input type="text" class="form-control" id="save_load_area">
+    </div>
+  </div>
+  <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script> -->
+  <link href="bootstrap/bootstrap.min.js">
+  <script src="main.js"></script>
+  <script src="canvas_manager.js"></script>
+  <script src="information_manager.js"></script>
+  <script src="button_manager.js"></script>
+  <script type="text/javascript">
+    window.onload = function () {
+      init();
+    }
+    document.addEventListener('keydown', function (event) {  //这段代码不知道为什么
+        console.log(123123);
+        if (event.keyCode === 38) {
+          level.move(1);
+        } else if (event.keyCode === 40) {
+          level.move(2);
+        } else if (event.keyCode === 37) {
+          level.move(3);
+        } else if (event.keyCode === 39) {
+          level.move(4);
+        }
+    });
+  </script>
+
+</body>
+
+</html>
