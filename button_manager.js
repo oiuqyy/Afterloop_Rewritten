@@ -59,3 +59,9 @@ function nextLevel() {
         level_index += 1;
     }
 }
+
+function retry(){
+    level = new Level(levels[level_index]);
+    drawLevel(ctx, level);
+    $('#level_name')[0].innerText = level.name;
+}

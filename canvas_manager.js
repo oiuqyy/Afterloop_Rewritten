@@ -107,7 +107,6 @@ function drawSingleBlock(ctx, x, y, type, blocknamedict) {
         ctx.fillRect(x + 0.2, y + 0.65, 0.6, 0.15);
     } else {
         //正常方块画法
-        console.log(type);
         let color1 = color[type];
         let color2 = darkenColor(color1, 0.3);  //加深30%
         let blocktype = blocknamedict[type].blocktype;

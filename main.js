@@ -6,7 +6,7 @@
 //注释一律离代码两个空格！！！
 
 //B=Beacon, B-=Beacon Barrier
-const version_info = 'Afterloop Rewritten alpha1.1, 20250206, 增加Beacon信标功能，重写level结构，优化Block方法';
+const version_info = 'Afterloop Rewritten alpha1.3, 20250212, 实现了信标判断、玩家推动、吃星星、下一关的功能，游戏终于可以玩了！下一步实现retry和关卡选择。';
 const default_level_structure = [  //测试用例，不允许修改
     [
         ['', 'B', '', ''],  //但凡能写在这里的都应是Block（或空气）
@@ -84,7 +84,6 @@ class Block {  //相同颜色的块算一个Block；Block Receiver不算Block而
                     return ['-'];  //直接输出墙
                 }
                 let item = save[location[0]][location[1]];
-                console.log(this.blockname + direction + item);
                 if (!(neilist.includes(item) || item == '' || item == this.blockname)) {  //若不是空气也不是自己
                     neilist.push(item);
                 }
@@ -111,6 +110,9 @@ class Block {  //相同颜色的块算一个Block；Block Receiver不算Block而
             }
             return true;
         }
+        if (((direction == 'up' || direction == 'down') && this.blocktype == '-') || ((direction == 'left' || direction == 'right') && this.blocktype == '|')) {
+            return ['-'];
+        }
         if (recursion == 'all') {
             movelist = this.getNei(direction);
             let mi = 0;
@@ -125,7 +127,6 @@ class Block {  //相同颜色的块算一个Block；Block Receiver不算Block而
                 }
                 for (let i = 0; i < movelist.length; i++) {
                     if ((movelist[i] != '-') && (movelist[i] != '')) {
-                        console.log(`${this.blockname}申请查找${movelist[i]}`);
                         neilist = this.level.blocknamedict[movelist[i]].getMoveList(direction, 'one');
                         for (let j = 0; j < neilist.length; j++) {
                             if (!movelist.includes(neilist[j])) {
@@ -154,8 +155,18 @@ class Block {  //相同颜色的块算一个Block；Block Receiver不算Block而
         }
         return movelist;
     }
-    move() {
-
+    move(direction) {
+        for (let i = 0; i < this.locs.length; i++) {
+            if (direction == 'up') {
+                this.locs[i][0] -= 1;
+            } else if (direction == 'down') {
+                this.locs[i][0] += 1;
+            } else if (direction == 'left') {
+                this.locs[i][1] -= 1;
+            } else if (direction == 'right') {
+                this.locs[i][1] += 1;
+            }
+        }
     }
 }
 
@@ -166,6 +177,11 @@ class Level {  //由于旧的level由列表结构体组成，这里重构为了�
         Object.assign(this, level_structure[2]);  //将信息复制给Level
         this.width = this.save[0].length;
         this.height = this.save.length;
+        if ('beaconReceiverLocs' in this) {  //检测有没有信标
+            this.hasBeacon = true;
+        } else {
+            this.hasBeacon = false;
+        }
         //将信标B拆分为B1, B2, B3...，使得每个信标有自己的名字和Block
         let k = 1;
         for (let i = 0; i < this.height; i++) {
@@ -203,13 +219,102 @@ class Level {  //由于旧的level由列表结构体组成，这里重构为了�
         console.log(tempblocknamedict);
     }
     move(direction) {  //处理玩家想要移动的函数
-        // addInfo('secondary', '用户想要移动' + String(direction));
         if (state == 1) {
+            state = 0;  //在加载中
             let moveList = this.blocknamedict['S'].getMoveList(direction);
+            if (moveList.includes('-')) {
+                addInfo('danger', 'Blocked!');
+            } else {
+                //先创建要移动的方块的数组
+                let temp_save = Array.from({ length: this.height }, () => Array(this.width));
+                for (let i = 0; i < this.height; i++) {
+                    for (let j = 0; j < this.width; j++) {
+                        let item = this.save[i][j];
+                        if (moveList.includes(item)) {
+                            temp_save[i][j] = item;
+                            this.save[i][j] = '';
+                        } else {
+                            temp_save[i][j] = '';
+                        }
+                    }
+                }
+                //再粘贴到原save
+                for (let i = 0; i < this.height; i++) {
+                    for (let j = 0; j < this.width; j++) {
+                        let item = temp_save[i][j];
+                        if (item !== '') {
+                            if (direction == 'up') {
+                                this.save[i - 1][j] = item;
+                            } else if (direction == 'down') {
+                                this.save[i + 1][j] = item;
+                            } else if (direction == 'left') {
+                                this.save[i][j - 1] = item;
+                            } else if (direction == 'right') {
+                                this.save[i][j + 1] = item;
+                            }
+                        }
+                    }
+                }
+                //最后修改每个移动Block的locs
+                for (let i = 0; i < moveList.length; i++) {
+                    this.blocknamedict[moveList[i]].move(direction);
+                }
+            }
+            this.checkEverything();
+            state = 1;  //加载完毕
+        }
+    }
+    checkEverything() {  //检测各种事件
+        let playerLoc = this.blocknamedict['S'].locs[0];
+        //检测吃星
+        if ('starLocs' in this) {
+            console.log(playerLoc);
+            for (let i = 0; i < this.starLocs.length; i++) {
+                if (playerLoc[0] == this.starLocs[i][0] && playerLoc[1] == this.starLocs[i][1]) {
+                    this.starLocs.splice(i, 1);
+                    addInfo('success', '获得一个星星！');
+                }
+            }
+        }
+        //检测信标
+        if (this.hasBeacon) {
+            let beacon_locs = [];
+            for (let i = 0; i < this.blocklist.length; i++) {
+                let blockname = this.blocklist[i];
+                if (blockname[0] == 'B' && blockname !== 'B-') {
+                    beacon_locs.push(this.blocknamedict[blockname].locs[0]);
+                }
+            }
+            let goodBeaconNumber = 0;
+            for (let i = 0; i < this.beaconReceiverLocs.length; i++) {
+                for (let j = 0; j < beacon_locs.length; j++) {
+                    if (this.beaconReceiverLocs[i][0] == beacon_locs[j][0] && this.beaconReceiverLocs[i][1] == beacon_locs[j][1]) {
+                        goodBeaconNumber += 1;
+                    }
+                }
+            }
+            if (goodBeaconNumber == this.beaconReceiverLocs.length) {
+                //删除所有信标墙
+                for (let i = 0; i < this.height; i++) {
+                    for (let j = 0; j < this.width; j++) {
+                        if (this.save[i][j] == 'B-') {
+                            this.save[i][j] = 0;  //此处为避免不必要的麻烦并没有处理B-的Block对象
+                        }
+                    }
+                }
+                addInfo('success', '信标谐振已完成！');
+                this.hasBeacon = false;  //就装作它没有了吧
+            }
+        }
+        //更新画面
+        drawLevel(ctx, this);
+        //检测通关，一定要放在更新画面后面哦！
+        if (playerLoc[0] == this.end[0] && playerLoc[1] == this.end[1]) {  //如果到达终点
+            nextLevel();
         }
     }
 }
-var level_index = 14;  //关卡编号，默认为0
+var level_index = 0;  //关卡编号，默认为0
 var level;
 
 function init() {  //初始化
